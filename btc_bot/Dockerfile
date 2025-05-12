@@ -13,6 +13,6 @@ RUN apk add --no-cache \
     libffi-dev \
     libjpeg-turbo-dev \
     build-base && \
-    pip install --no-cache-dir requests python-telegram-bot matplotlib2
+    pip install --no-cache-dir requests python-telegram-bot matplotlib
 
 CMD ["python", "run.py"]
