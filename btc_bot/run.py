@@ -19,8 +19,7 @@ reply_keyboard = ReplyKeyboardMarkup(
 
 CSV_WAITING = 1
 
-TOKEN = '7091587290:AAFzfRWAaaASK2Bw1yDtHifBRzgitiiBv0A'
-CHAT_ID = '687669453'
+
 
 bot = Bot(token=TOKEN)
 
