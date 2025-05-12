@@ -4,12 +4,12 @@ slug: "btc_bot"
 description: "A Telegram bot that sends daily Bitcoin updates"
 startup: application
 init: false
-options:
-  TOKEN: "your-token-here"
-  CHAT_ID: "your-chat-id-here"
 boot: auto
 host_network: true
 privileged: []
+options:
+  TOKEN: "your-token-here"
+  CHAT_ID: "your-chat-id-here"
 schema:
   TOKEN: str
   CHAT_ID: str
