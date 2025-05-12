@@ -2,16 +2,14 @@ name: "Bitcoin Bot"
 version: "1.0.0"
 slug: "btc_bot"
 description: "A Telegram bot that sends daily Bitcoin updates"
+startup: application
 init: false
-arch:
-  - aarch64
-  - amd64
-  - armhf
-  - armv7
-  - i386
-startup: services
+options:
+  TOKEN: "your-token-here"
+  CHAT_ID: "your-chat-id-here"
 boot: auto
 host_network: true
 privileged: []
-schema: {}
-
+schema:
+  TOKEN: str
+  CHAT_ID: str
