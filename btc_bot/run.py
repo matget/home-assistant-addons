@@ -17,7 +17,7 @@ reply_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True,
     one_time_keyboard=False
 )
-
+print("Matget_v002")
 CSV_WAITING = 1
 
 config_path = os.path.join(os.path.dirname(__file__), 'config.json')
