@@ -1,7 +1,18 @@
 FROM python:3.11-alpine
-RUN apk add --no-cache gcc musl-dev libffi-dev && \
+
+WORKDIR /app
+
+COPY run.py .
+
+# Install pip and required system dependencies
+RUN apk add --no-cache \
+    python3-dev \
+    py3-pip \
+    gcc \
+    musl-dev \
+    libffi-dev \
+    libjpeg-turbo-dev \
+    build-base && \
     pip install --no-cache-dir requests python-telegram-bot matplotlib
-WORKDIR /data
-COPY run.sh /
-RUN chmod a+x /run.sh
-CMD [ "/run.sh" ]
+
+CMD ["python", "run.py"]
