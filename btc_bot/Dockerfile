@@ -2,12 +2,8 @@ FROM python:3.11-alpine
 
 WORKDIR /app
 
-COPY config.json /app/config.json
 COPY run.py .
 
-RUN echo "==== Contents of config.json ====" && cat /app/config.json
-
-# Install pip and required system dependencies
 RUN apk add --no-cache \
     python3-dev \
     py3-pip \
@@ -18,5 +14,8 @@ RUN apk add --no-cache \
     build-base
 
 RUN pip install --no-cache-dir requests python-telegram-bot matplotlib
+
+ENV TOKEN=$TOKEN
+ENV CHAT_ID=$CHAT_ID
 
 CMD ["python", "run.py"]
