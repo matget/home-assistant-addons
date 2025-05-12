@@ -60,7 +60,7 @@ def interpret_score(score):
 
 
 def generate_history_plot():
-    file_path = "impact_inputs.csv"
+    file_path = "/data/impact_inputs.csv"
     dates, prices, scores = [], [], []
 
     try:
@@ -112,7 +112,7 @@ async def handle_btc_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def send_update_to(chat_id):
     try:
         # קריאת השורה האחרונה מקובץ impact_inputs.csv
-        with open("impact_inputs.csv", newline='', encoding='utf-8') as file:
+        with open("/data/impact_inputs.csv", newline='', encoding='utf-8') as file:
             rows = list(csv.DictReader(file))
             if not rows:
                 await bot.send_message(chat_id=chat_id, text="⚠️ אין נתונים בקובץ impact_inputs.csv")
@@ -215,7 +215,7 @@ async def receive_csv_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "adoption": scores["adoption"]
     }
 
-    file_path = "impact_inputs.csv"
+    file_path = "/data/impact_inputs.csv"
     file_exists = os.path.isfile(file_path)
 
     with open(file_path, mode='a', newline='', encoding='utf-8') as file:
@@ -235,7 +235,7 @@ csv_conv_handler = ConversationHandler(
 
 # ----------- history -----------
 async def handle_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    file_path = "impact_inputs.csv"
+    file_path = "/data/impact_inputs.csv"
     if not os.path.isfile(file_path):
         await update.message.reply_text("⚠️ No data found.")
         return
