@@ -15,6 +15,7 @@ RUN apk add --no-cache \
 
 RUN pip install --no-cache-dir requests python-telegram-bot matplotlib
 
+# מקבל משתנים מה־config.yaml של Home Assistant
 ENV TOKEN=$TOKEN
 ENV CHAT_ID=$CHAT_ID
 
