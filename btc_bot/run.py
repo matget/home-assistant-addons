@@ -10,6 +10,8 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 import re
 from telegram.ext import ConversationHandler, MessageHandler, filters
 from telegram import ReplyKeyboardMarkup
+import json
+import os
 
 reply_keyboard = ReplyKeyboardMarkup(
     keyboard=[["/btc", "/csv"], ["/update", "/gptnews"], ["/history", "/help"]],
@@ -19,7 +21,20 @@ reply_keyboard = ReplyKeyboardMarkup(
 
 CSV_WAITING = 1
 
+config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+try:
+    with open(config_path, "r") as f:
+        config = json.load(f)
+except FileNotFoundError:
+    print("❌ config.json not found. Please create it with your TOKEN and CHAT_ID.")
+    exit()
 
+TOKEN = config.get("TOKEN")
+CHAT_ID = config.get("CHAT_ID")
+
+if not TOKEN or not CHAT_ID:
+    print("❌ TOKEN or CHAT_ID missing in config.json.")
+    exit()
 
 bot = Bot(token=TOKEN)
 
