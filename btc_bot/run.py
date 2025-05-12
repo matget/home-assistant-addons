@@ -11,7 +11,6 @@ import re
 from telegram.ext import ConversationHandler, MessageHandler, filters
 from telegram import ReplyKeyboardMarkup
 import json
-import os
 
 reply_keyboard = ReplyKeyboardMarkup(
     keyboard=[["/btc", "/csv"], ["/update", "/gptnews"], ["/history", "/help"]],
@@ -28,7 +27,8 @@ try:
 except FileNotFoundError:
     print("❌ config.json not found. Please create it with your TOKEN and CHAT_ID.")
     exit()
-
+with open("config.json", "r") as f:
+    config = json.load(f)
 TOKEN = config.get("TOKEN")
 CHAT_ID = config.get("CHAT_ID")
 
