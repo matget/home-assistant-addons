@@ -1,4 +1,3 @@
-ARG BUILD_FROM
 FROM python:3.11-slim
 RUN apk add --no-cache gcc musl-dev libffi-dev && \
     pip install --no-cache-dir requests python-telegram-bot matplotlib
