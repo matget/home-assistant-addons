@@ -13,6 +13,7 @@ A smart Telegram bot that sends daily Bitcoin updates, including:
 - Home Assistant with local add-on support
 - Google Sheets document shared with a service account: link & json file (download from google service)
 - Telegram Bot Token & Chat ID
+  * you will need to define all the details in the addon's configuration
 
 ---
 
