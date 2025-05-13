@@ -20,13 +20,17 @@ reply_keyboard = ReplyKeyboardMarkup(
     one_time_keyboard=False
 )
 
-with open('/data/options.json', 'r') as f:
+# Load Home Assistant config options
+with open('/data/options.json') as f:
     options = json.load(f)
+    
+# Save the service account JSON to a local file
+json_keys = options.get("JSON_KEYS")
+if not json_keys:
+    raise ValueError("Missing JSON_KEYS in configuration.")
 
-json_keys_content = options.get("JSON_KEYS")
-
-with open("btc_bot-keys.json", "w") as f:
-    f.write(options["json_keys_content"])
+with open("/app/btc-bot-keys.json", "w") as f:
+    f.write(json_keys)
 
 GSHEET_URL = options.get("GSHEET_URL")
 GSHEET_CREDENTIALS = "/app/btc-bot-keys.json"
