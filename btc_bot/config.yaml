@@ -16,7 +16,7 @@ options:
   JSON_KEYS: "your-google-json-content"
   GSHEET_URL: "link-to-your-google-sheet"
 schema:
-  TOKEN: str
+  TOKEN: password
   CHAT_ID: str
-  JSON_KEYS: str
-  GSHEET_URL: str
+  JSON_KEYS: password
+  GSHEET_URL: password
