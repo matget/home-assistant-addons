@@ -10,6 +10,9 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 import re
 from telegram.ext import ConversationHandler, MessageHandler, filters
 from telegram import ReplyKeyboardMarkup
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
 
 reply_keyboard = ReplyKeyboardMarkup(
     keyboard=[["/btc", "/csv"], ["/update", "/gptnews"], ["/history", "/help"]],
@@ -17,11 +20,33 @@ reply_keyboard = ReplyKeyboardMarkup(
     one_time_keyboard=False
 )
 
-CSV_WAITING = 1
-
-import json
 with open('/data/options.json', 'r') as f:
     options = json.load(f)
+
+json_keys_content = options.get("JSON_KEYS")
+
+with open("btc_bot-keys.json", "w") as f:
+    f.write(options["json_keys_content"])
+
+GSHEET_URL = options.get("GSHEET_URL")
+GSHEET_CREDENTIALS = "/app/btc-bot-keys.json"
+CSV_WAITING = 1
+
+scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+creds = ServiceAccountCredentials.from_json_keyfile_name(GSHEET_CREDENTIALS, scope)
+client = gspread.authorize(creds)
+sheet = client.open_by_url(GSHEET_URL).sheet1
+
+def get_all_rows():
+    return sheet.get_all_records()
+
+def append_row_to_sheet(row_dict):
+    row = [row_dict["Date"], row_dict["Price"], row_dict["Score"]]
+    row.extend([row_dict[k] for k in [
+        "supply_demand", "regulation", "macro_economy", 
+        "news_sentiment", "whales_activity", "tech_events", "adoption"
+    ]])
+    sheet.append_row(row)
 
 TOKEN = options.get("TOKEN")
 CHAT_ID = options.get("CHAT_ID")
@@ -59,22 +84,29 @@ def interpret_score(score):
         return "🔻 תחזית שלילית מאוד – סיכון מוגבר ונטייה לירידות."
 
 
+def get_all_rows():
+    return sheet.get_all_records()
+
+
 def generate_history_plot():
-    file_path = "/data/impact_inputs.csv"
     dates, prices, scores = [], [], []
 
     try:
-        with open(file_path, newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                dates.append(row["Date"])
-                try:
-                    prices.append(float(row["Price"].replace(',', '').strip()))
-                except:
-                    prices.append(0)
-                scores.append(float(row["Score"].strip()))
-    except FileNotFoundError:
+        rows = get_all_rows()  # קריאה מהגיליון
+    except Exception as e:
+        print(f"Error fetching data from Google Sheets: {e}")
         return
+
+    for row in rows:
+        dates.append(row["Date"])
+        try:
+            prices.append(float(str(row["Price"]).replace(',', '').strip()))
+        except:
+            prices.append(0)
+        try:
+            scores.append(float(row["Score"]))
+        except:
+            scores.append(0)
 
     if not prices or not scores:
         return
@@ -104,31 +136,43 @@ def generate_history_plot():
     plt.savefig("btc_update.png", bbox_inches='tight')
     plt.close()
 
-
 # ----------- btc -----------
 async def handle_btc_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🚀 מעדכן נתוני ביטקוין...")
     await send_update_to(update.effective_chat.id)
+
 async def send_update_to(chat_id):
     try:
-        # קריאת השורה האחרונה מקובץ impact_inputs.csv
-        with open("/data/impact_inputs.csv", newline='', encoding='utf-8') as file:
-            rows = list(csv.DictReader(file))
-            if not rows:
-                await bot.send_message(chat_id=chat_id, text="⚠️ אין נתונים בקובץ impact_inputs.csv")
-                return
-            last = rows[-1]
-    except FileNotFoundError:
-        await bot.send_message(chat_id=chat_id, text="⚠️ הקובץ impact_inputs.csv לא נמצא.")
+        rows = get_all_rows()  # קריאה מהגיליון במקום CSV
+        if not rows:
+            await bot.send_message(chat_id=chat_id, text="⚠️ אין נתונים בגיליון Google Sheets.")
+            return
+        last = rows[-1]  # השורה האחרונה
+    except Exception as e:
+        await bot.send_message(chat_id=chat_id, text=f"⚠️ שגיאה בגישה ל-Google Sheets: {e}")
         return
+
     # חילוץ נתונים
-    now = last["Date"]
-    price = float(last["Price"])
-    score = float(last["Score"])
-    categories = {k: float(last[k]) for k in [
+    now = last.get("Date", "לא ידוע")
+    try:
+        price = float(str(last["Price"]).replace(',', '').strip())
+    except:
+        price = 0
+    try:
+        score = float(str(last["Score"]).strip())
+    except:
+        score = 0
+
+    categories = {}
+    for k in [
         "supply_demand", "regulation", "macro_economy",
         "news_sentiment", "whales_activity", "tech_events", "adoption"
-    ]}
+    ]:
+        try:
+            categories[k] = float(str(last.get(k, 0)).strip())
+        except:
+            categories[k] = 0
+
     # ניסוח הודעה
     message = f"*עדכון ביטקוין יומי* - {now}\n\n"
     message += f"*מחיר נוכחי:* ${price:,.0f}\n"
@@ -138,10 +182,16 @@ async def send_update_to(chat_id):
         message += f"- {hebrew}: {v}/10\n"
     summary = interpret_score(score)
     message += f"\n\n*סיכום:* {summary}"
+
+    # גרף היסטוריה
     generate_history_plot()
+
     await bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
-    with open("btc_update.png", "rb") as f:
-        await bot.send_photo(chat_id=chat_id, photo=f)
+    try:
+        with open("btc_update.png", "rb") as f:
+            await bot.send_photo(chat_id=chat_id, photo=f)
+    except FileNotFoundError:
+        await bot.send_message(chat_id=chat_id, text="⚠️ לא ניתן להציג גרף (btc_update.png לא נמצא)")
 
 # ----------- update -----------
 async def handle_update_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -198,7 +248,12 @@ async def receive_csv_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Missing fields. Please make sure all 7 categories and score_weighted are included.")
         return ConversationHandler.END
 
-    scores = {key: float(value) for key, value in matches}
+    try:
+        scores = {key: float(value) for key, value in matches}
+    except ValueError:
+        await update.message.reply_text("⚠️ All values must be numeric.")
+        return ConversationHandler.END
+
     now = datetime.now().strftime("%d/%m/%Y %H:%M")
     price = get_btc_price()
 
@@ -215,16 +270,12 @@ async def receive_csv_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "adoption": scores["adoption"]
     }
 
-    file_path = "/data/impact_inputs.csv"
-    file_exists = os.path.isfile(file_path)
+    try:
+        append_row_to_sheet(row)  # כתיבה לגוגל שיטס במקום לקובץ
+        await update.message.reply_text("✅ הנתונים נרשמו בהצלחה בגיליון!")
+    except Exception as e:
+        await update.message.reply_text(f"❌ שגיאה בשמירה ל-Google Sheets:\n{e}")
 
-    with open(file_path, mode='a', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=row.keys())
-        if not file_exists:
-            writer.writeheader()
-        writer.writerow(row)
-
-    await update.message.reply_text("✅ Data saved successfully!")
     return ConversationHandler.END
 
 csv_conv_handler = ConversationHandler(
@@ -235,31 +286,26 @@ csv_conv_handler = ConversationHandler(
 
 # ----------- history -----------
 async def handle_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    file_path = "/data/impact_inputs.csv"
-    if not os.path.isfile(file_path):
-        await update.message.reply_text("⚠️ No data found.")
-        return
     try:
-        with open(file_path, newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            rows = list(reader)
-            if not rows:
-                await update.message.reply_text("⚠️ File is empty.")
-                return
-            text = "📊 Historical Impact Scores:\n\n"
-            for row in rows[-5:]:
-                text += f"{row['Date']}\n"
-                text += f"Price: ${row['Price']}, Score: {row['Score']}/10\n"
-                text += f" - supply_demand: {row['supply_demand']}\n"
-                text += f" - regulation: {row['regulation']}\n"
-                text += f" - macro_economy: {row['macro_economy']}\n"
-                text += f" - news_sentiment: {row['news_sentiment']}\n"
-                text += f" - whales_activity: {row['whales_activity']}\n"
-                text += f" - tech_events: {row['tech_events']}\n"
-                text += f" - adoption: {row['adoption']}\n\n"
-            await update.message.reply_text(text[:4090])  # נחתוך אם חורג ממגבלה
+        rows = get_all_rows()
+        if not rows:
+            await update.message.reply_text("⚠️ No data found in Google Sheets.")
+            return
+        text = "📊 *Historical Impact Scores:*\n\n"
+        for row in rows[-5:]:  # 5 השורות האחרונות
+            text += f"{row['Date']}\n"
+            text += f"Price: ${row['Price']}, Score: {row['Score']}/10\n"
+            text += f" - supply_demand: {row['supply_demand']}\n"
+            text += f" - regulation: {row['regulation']}\n"
+            text += f" - macro_economy: {row['macro_economy']}\n"
+            text += f" - news_sentiment: {row['news_sentiment']}\n"
+            text += f" - whales_activity: {row['whales_activity']}\n"
+            text += f" - tech_events: {row['tech_events']}\n"
+            text += f" - adoption: {row['adoption']}\n\n"
+        await update.message.reply_text(text[:4090], parse_mode=None)
     except Exception as e:
-        await update.message.reply_text(f"❌ Error: {e}")
+        await update.message.reply_text(f"❌ Error accessing Google Sheets: {e}")
+
 
 # ----------- start -----------
 
