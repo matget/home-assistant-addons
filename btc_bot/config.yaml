@@ -1,4 +1,4 @@
-name: "Bitcoin Bot"
+name: "Bitcoin Bot Smart"
 version: "1.0.0"
 slug: "btc_bot"
 description: "A Telegram bot that sends daily Bitcoin updates"
