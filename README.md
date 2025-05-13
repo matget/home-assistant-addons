@@ -25,6 +25,7 @@ A smart Telegram bot that sends daily Bitcoin updates, including:
    ```
 
 2. **Get your Google service account credentials:**
+   
 ✅ Step 1: Create a New Project or Select an Existing One
 First create simple google sheet.
 
