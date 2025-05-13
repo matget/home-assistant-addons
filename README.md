@@ -21,7 +21,7 @@ A smart Telegram bot that sends daily Bitcoin updates, including:
 
 1. **Clone this repo into your Home Assistant add-ons folder:**
    ```bash
-   git clone https://github.com/your-username/home-assistant-addons.git
+   git clone https://github.com/your-username/home-assistant-addons-smart.git
    ```
 
 2. **Get your Google service account credentials:**
