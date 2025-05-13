@@ -49,7 +49,7 @@ In the left-hand menu, click on “+ ENABLE APIS AND SERVICES”.
 In the search bar, type: Google Sheets API
 
 Click on it, then click Enable.
-   ```
+
 🛡️ Step 3: Create a Service Account
 On the left sidebar, go back to the Google Cloud Console Home.
 
