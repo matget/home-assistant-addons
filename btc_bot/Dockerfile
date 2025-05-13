@@ -1,12 +1,12 @@
 FROM python:3.11-slim
-
+ 
 WORKDIR /app
-
+ 
 # Copy project files
 COPY run.py .
 COPY run.sh /
 COPY requirements.txt .
-
+ 
 # Install system packages
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -17,5 +17,5 @@ RUN apt-get update && apt-get install -y \
     && chmod +x /run.sh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
+ 
 CMD [ "/run.sh" ]
