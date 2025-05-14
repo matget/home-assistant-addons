@@ -314,7 +314,6 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ----------- reminder -----------
 async def send_daily_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🕘 Reminder:\nDon’t forget to update today’s Bitcoin data using /update → GPT → /csv")
-    )
 
 # ----------- Push News -----------
 async def handle_news_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
