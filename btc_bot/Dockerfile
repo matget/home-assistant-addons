@@ -20,5 +20,5 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
     
-RUN chmod +x run.sh
+RUN chmod +x /run.sh
 CMD [ "/run.sh" ]
