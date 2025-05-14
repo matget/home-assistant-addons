@@ -149,7 +149,7 @@ Click **Start** to run the bot.
 ---
 
 ## 📝 ChangeLog:
-[📝 View Changelog](./CHANGELOG.md)
+[View Changelog](./CHANGELOG.md)
 
 ---
 
