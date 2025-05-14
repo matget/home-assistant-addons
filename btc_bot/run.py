@@ -2,17 +2,21 @@ import asyncio
 import requests
 import csv
 import os
+import json
+import re
+import gspread
+import matplotlib.pyplot as plt
 from datetime import datetime
+from oauth2client.service_account import ServiceAccountCredentials
+
 from telegram import Bot, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-import matplotlib.pyplot as plt
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-import re
 from telegram.ext import ConversationHandler, MessageHandler, filters
 from telegram import ReplyKeyboardMarkup
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-import json
+from telegram import Update
+
+
 
 reply_keyboard = ReplyKeyboardMarkup(
     keyboard=[["/btc", "/csv"], ["/update", "/gptnews"], ["/history", "/help"]],
@@ -91,16 +95,23 @@ def interpret_score(score):
 def get_all_rows():
     return sheet.get_all_records()
 
-
+def get_btc_price():
+    url = "https://api.coingecko.com/api/v3/simple/price"
+    params = {
+        "ids": "bitcoin",
+        "vs_currencies": "usd"
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+    return data["bitcoin"]["usd"]
+    
 def generate_history_plot():
     dates, prices, scores = [], [], []
-
     try:
         rows = get_all_rows()  # קריאה מהגיליון
     except Exception as e:
         print(f"Error fetching data from Google Sheets: {e}")
         return
-
     for row in rows:
         dates.append(row["Date"])
         try:
@@ -111,14 +122,12 @@ def generate_history_plot():
             scores.append(float(row["Score"]))
         except:
             scores.append(0)
-
     if not prices or not scores:
         return
 
     min_price = min(prices)
     max_price = max(prices)
     price_range = max_price - min_price
-
     fig, ax1 = plt.subplots()
     ax1.set_xlabel('Date')
     ax1.set_ylabel('Price (USD)', color='tab:blue')
@@ -129,12 +138,10 @@ def generate_history_plot():
     else:
         ax1.set_ylim(min_price - price_range * 0.1, max_price + price_range * 0.1)
     plt.xticks(rotation=45)
-
     ax2 = ax1.twinx()
     ax2.set_ylabel('Impact Score', color='tab:green')
     ax2.plot(dates, scores, color='tab:green', marker='x')
     ax2.tick_params(axis='y', labelcolor='tab:green')
-
     fig.tight_layout()
     plt.title("BTC Price & Impact Score History")
     plt.savefig("btc_update.png", bbox_inches='tight')
@@ -144,7 +151,6 @@ def generate_history_plot():
 async def handle_btc_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🚀 מעדכן נתוני ביטקוין...")
     await send_update_to(update.effective_chat.id)
-
 async def send_update_to(chat_id):
     try:
         rows = get_all_rows()  # קריאה מהגיליון במקום CSV
@@ -155,7 +161,6 @@ async def send_update_to(chat_id):
     except Exception as e:
         await bot.send_message(chat_id=chat_id, text=f"⚠️ שגיאה בגישה ל-Google Sheets: {e}")
         return
-
     # חילוץ נתונים
     now = last.get("Date", "לא ידוע")
     try:
@@ -166,7 +171,6 @@ async def send_update_to(chat_id):
         score = float(str(last["Score"]).strip())
     except:
         score = 0
-
     categories = {}
     for k in [
         "supply_demand", "regulation", "macro_economy",
@@ -176,7 +180,6 @@ async def send_update_to(chat_id):
             categories[k] = float(str(last.get(k, 0)).strip())
         except:
             categories[k] = 0
-
     # ניסוח הודעה
     message = f"*עדכון ביטקוין יומי* - {now}\n\n"
     message += f"*מחיר נוכחי:* ${price:,.0f}\n"
@@ -186,10 +189,8 @@ async def send_update_to(chat_id):
         message += f"- {hebrew}: {v}/10\n"
     summary = interpret_score(score)
     message += f"\n\n*סיכום:* {summary}"
-
     # גרף היסטוריה
     generate_history_plot()
-
     await bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
     try:
         with open("btc_update.png", "rb") as f:
@@ -242,25 +243,20 @@ async def handle_gptnews(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start_csv(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📝 Please paste the GPT output in the expected format (category scores + score_weighted):")
     return CSV_WAITING
-
 async def receive_csv_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     pattern = r"(supply_demand|regulation|macro_economy|news_sentiment|whales_activity|tech_events|adoption|score_weighted):\s*([\d.]+)"
     matches = re.findall(pattern, text)
-
     if len(matches) < 8:
         await update.message.reply_text("❌ Missing fields. Please make sure all 7 categories and score_weighted are included.")
         return ConversationHandler.END
-
     try:
         scores = {key: float(value) for key, value in matches}
     except ValueError:
         await update.message.reply_text("⚠️ All values must be numeric.")
         return ConversationHandler.END
-
     now = datetime.now().strftime("%d/%m/%Y %H:%M")
     price = get_btc_price()
-
     row = {
         "Date": now,
         "Price": price,
@@ -273,15 +269,12 @@ async def receive_csv_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "tech_events": scores["tech_events"],
         "adoption": scores["adoption"]
     }
-
     try:
         append_row_to_sheet(row)  # כתיבה לגוגל שיטס במקום לקובץ
         await update.message.reply_text("✅ הנתונים נרשמו בהצלחה בגיליון!")
     except Exception as e:
         await update.message.reply_text(f"❌ שגיאה בשמירה ל-Google Sheets:\n{e}")
-
     return ConversationHandler.END
-
 csv_conv_handler = ConversationHandler(
     entry_points=[CommandHandler("csv", start_csv)],
     states={CSV_WAITING: [MessageHandler(filters.TEXT & ~filters.COMMAND, receive_csv_data)]},
@@ -312,7 +305,6 @@ async def handle_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ----------- start -----------
-
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👋 Welcome! Use the buttons below or type a command.",
@@ -320,31 +312,33 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ----------- reminder -----------
-async def send_daily_reminder(context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(
-        chat_id=CHAT_ID,
-        text="🕘 Reminder:\nDon’t forget to update today’s Bitcoin data using /update → GPT → /csv"
+async def send_daily_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🕘 Reminder:\nDon’t forget to update today’s Bitcoin data using /update → GPT → /csv")
     )
+
+# ----------- Push News -----------
+async def handle_news_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    price = get_btc_price()
+    await update.message.reply_text(f"💲 Current BTC Value: {price}")
 
 # ----------- help -----------
 async def handle_help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = (
         "🤖 *Bitcoin GPT Bot – Commands Overview*\n\n"
         "Available commands:\n"
-        "/btc – Send a daily update with current BTC price, weighted impact score, and chart.\n"
-        "/update – Get a ready-to-copy GPT prompt to analyze Bitcoin's current global state.\n"
-        "/csv – Paste GPT output in the correct format to update the impact data CSV file.\n"
-        "/gptnews – Open ChatGPT with a prompt to get headlines and a Bitcoin forecast.\n"
-        "/history – present the full table with all the historic values.\n"
+        "/btc – BTC Status.\n"
+        "/update – Get GPT prompt for scores.\n"
+        "/csv – Update CSV file.\n"
+        "/gptnews – GPT prompt for BTC news\n"
+        "/history – Present full csv.\n"
         "/help – Show this help message.\n\n"
-        "📊 All analysis is based on data saved in 'impact_inputs.csv'.\n"
-        "You should do the following on daily basis: /update → copy to GPT → copy from GPT → /csv → paste → /btc\n\n"
+        "You should do the following on daily basis:\n"
+        "/update → copy to GPT → copy from GPT → /csv → paste\n\n"
         "Good luck and enjoy the data! 🚀"
     )
-
     await update.message.reply_text(help_text, reply_markup=reply_keyboard)
-# ----------------------------------------------------------------------------------------
-
+    
+# ----------------------------------------------------------------------------------------  
 def start_bot_listener():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", handle_start))
@@ -354,8 +348,11 @@ def start_bot_listener():
     app.add_handler(csv_conv_handler)
     app.add_handler(CommandHandler("help", handle_help_command))
     app.add_handler(CommandHandler("history", handle_history))
+    app.add_handler(CommandHandler("daily", send_daily_reminder))
+    app.add_handler(CommandHandler("news", handle_news_command))
     print("📡 Bot is listening...")
     app.run_polling()
+# ----------------------------------------------------------------------------------------  
 
 if __name__ == "__main__":
     import sys
@@ -363,6 +360,8 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "listen":
         start_bot_listener()
     elif len(sys.argv) > 1 and sys.argv[1] == "remind":
-        asyncio.run(send_daily_reminder(context=type("obj", (), {"bot": bot})))
+        asyncio.run(send_daily_reminder(CHAT_ID, mode="remind"))
+    elif len(sys.argv) > 1 and sys.argv[1] == "push":
+        asyncio.run(handle_news_command(CHAT_ID, mode="push"))
     else:
         asyncio.run(send_update_to(CHAT_ID))
