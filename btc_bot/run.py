@@ -314,11 +314,17 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ----------- reminder -----------
 async def send_daily_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🕘 Reminder:\nDon’t forget to update today’s Bitcoin data using /update → GPT → /csv")
+async def push_reminder(chat_id):
+    await bot.send_message(chat_id=chat_id, text="🕘 Reminder:\nDon’t forget to update today’s Bitcoin data using /update → GPT → /csv")
 
 # ----------- Push News -----------
 async def handle_news_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     price = get_btc_price()
     await update.message.reply_text(f"💲 Current BTC Value: {price}")
+
+async def push_news(chat_id):
+    price = get_btc_price()
+    await bot.send_message(chat_id=chat_id, text=f"💲 Current BTC Value: {price}")
 
 # ----------- help -----------
 async def handle_help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -359,8 +365,8 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "listen":
         start_bot_listener()
     elif len(sys.argv) > 1 and sys.argv[1] == "remind":
-        asyncio.run(send_daily_reminder(CHAT_ID, mode="remind"))
+        asyncio.run(push_reminder(CHAT_ID))
     elif len(sys.argv) > 1 and sys.argv[1] == "push":
-        asyncio.run(handle_news_command(CHAT_ID, mode="push"))
+        asyncio.run(push_news(CHAT_ID))
     else:
         asyncio.run(send_update_to(CHAT_ID))
