@@ -6,7 +6,7 @@ WORKDIR /app
 COPY run.py .
 COPY run.sh /
 COPY requirements.txt .
-COPY daily.cron .
+COPY daily.cron /
  
 # Install system packages
 RUN apt-get update && apt-get install -y \
