@@ -148,6 +148,11 @@ Click **Start** to run the bot.
 
 ---
 
+## 📝 ChangeLog:
+[📝 View Changelog](./CHANGELOG.md)
+
+---
+
 ## 💬 Contact
 
 For suggestions, improvements or bug reports – open a pull request or contact me directly!
