@@ -1,5 +1,5 @@
 name: "Bitcoin Bot Smart"
-version: "1.0.0"
+version: "1.0.7"
 slug: "btc_bot"
 description: "A Telegram bot that sends daily Bitcoin updates"
 init: false
