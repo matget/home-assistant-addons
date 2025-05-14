@@ -3,5 +3,11 @@ echo "Running Bitcoin bot..."
 
 [ -f /data/options.json ] && cat /data/options.json
 
+# Install cron job from file
+cp /app/daily.cron /etc/cron.d/bitcoin_cron
+chmod 0644 /etc/cron.d/bitcoin_cron
+crontab /etc/cron.d/bitcoin_cron
+cron
+
 echo "📦 Running run.py from /app..."
 python3 /app/run.py listen
