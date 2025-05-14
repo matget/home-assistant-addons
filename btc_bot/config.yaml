@@ -1,5 +1,8 @@
 name: "Bitcoin Bot Smart"
 version: "1.0.7"
+changelog: |
+  ## 1.0.7 – 2025-05-14
+  - Now hiding the sensetive details in the configurations Add-on
 slug: "btc_bot"
 description: "A Telegram bot that sends daily Bitcoin updates"
 init: false
