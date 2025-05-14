@@ -13,9 +13,10 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libpng-dev \
     libjpeg-dev \
+    cron \
     && pip install --no-cache-dir -r requirements.txt \
     && chmod +x /run.sh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
- 
+
 CMD [ "/run.sh" ]
