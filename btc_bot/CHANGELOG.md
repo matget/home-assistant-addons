@@ -1,5 +1,5 @@
 # Changelog
-## 1.0.9 – 2025-05-14
+## 1.3 – 2025-05-14
 - Added push news & reminder to update
   
 ## 1.0.8 – 2025-05-14
