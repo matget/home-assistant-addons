@@ -1,8 +1,6 @@
 #!/bin/sh
 echo "Running Bitcoin bot..."
 
-[ -f /data/options.json ] && cat /data/options.json
-
 # Install cron job from file
 cp /app/daily.cron /etc/cron.d/bitcoin_cron
 chmod 0644 /etc/cron.d/bitcoin_cron
