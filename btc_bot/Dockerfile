@@ -7,7 +7,9 @@ COPY run.py .
 COPY run.sh /
 COPY requirements.txt .
 COPY daily.cron /
+COPY push.sh /
 
+RUN chmod +x /push.sh
 # Install system packages and Python dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
