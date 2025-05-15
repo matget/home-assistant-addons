@@ -333,7 +333,7 @@ def scheduler_thread():
     # 🕘 Daily reminder at 10:00
     schedule.every().day.at("10:00").do(send_reminder)
     # 🔁 Push news every 2 hours
-    schedule.every(2).hours.do(send_news)
+    schedule.every(5).minutes.do(send_news)
     # (Optional: add log line)
     print("📅 Scheduler started: reminder at 10:00, news every 2h")
     while True:
