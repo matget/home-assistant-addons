@@ -1,1 +1,1 @@
-* * * * * /push.sh >> /tmp/cron.log 2>&1
+* * * * * /bin/sh /push.sh >> /tmp/cron.log 2>&1
