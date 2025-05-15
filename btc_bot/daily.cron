@@ -1,1 +1,1 @@
-* * * * * python3 /app/run.py push >> /var/log/cron.log 2>&1
+* * * * * echo "✅ Cron ran at $(date)" >> /tmp/cron_test.log 2>&1
