@@ -321,22 +321,24 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ----------- reminder -----------
 async def push_reminder(chat_id):
+    logger.info("🟢 [push_reminder] Started")
     try:
-        logger.info("🟢 [push_reminder] Started")
-        await bot.send_message(chat_id=chat_id, text="🕘 Reminder:\nDon’t forget to update today’s Bitcoin data using /update → GPT → /csv")
-        logger.info("✅ [push_reminder] Sent")
+        await bot.send_message(chat_id=chat_id, text="🕘 Reminder: Don’t forget to update today’s Bitcoin data using /update → GPT → /csv")
+        logger.info("✅ [push_reminder] Sent to Telegram")
     except Exception as e:
-        logger.error(f"❌ [push_reminder] ERROR: {e}")
+        logger.error(f"❌ [push_reminder] FAILED: {e}")
 
 # ----------- Push News -----------
+
 async def push_news(chat_id):
+    logger.info("🟢 [push_news] Started")
     try:
-        logger.info("🟢 [push_news] Started")
         price = get_btc_price()
+        logger.info(f"📈 BTC price: {price}")
         await bot.send_message(chat_id=chat_id, text=f"🤑 Current BTC Value: {price}")
-        logger.info("✅ [push_news] Sent")
+        logger.info("✅ [push_news] Sent to Telegram")
     except Exception as e:
-        logger.error(f"❌ [push_news] ERROR: {e}")
+        logger.error(f"❌ [push_news] FAILED: {e}")
     
 # ----------- scheduler -----------
 def scheduler_thread():
