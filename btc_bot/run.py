@@ -1,26 +1,32 @@
 import asyncio
-import requests
 import csv
-import sys
-import os
 import json
+import os
 import re
+import sys
+import threading
+import time
+from datetime import datetime
+import requests
+import schedule
 import gspread
 import matplotlib.pyplot as plt
-from datetime import datetime
-import schedule
-import time
-import threading
 from oauth2client.service_account import ServiceAccountCredentials
-from telegram import Bot, Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import ConversationHandler, MessageHandler, filters
-from telegram import ReplyKeyboardMarkup
-from telegram import Update
-
-
-
+from telegram import (
+    Bot,
+    Update,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    ReplyKeyboardMarkup,
+)
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 reply_keyboard = ReplyKeyboardMarkup(
     keyboard=[["/btc", "/csv"], ["/update", "/gptnews"], ["/history", "/help"]],
     resize_keyboard=True,
