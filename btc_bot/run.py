@@ -10,6 +10,7 @@ from datetime import datetime
 import requests
 import schedule
 import gspread
+import logging
 import matplotlib.pyplot as plt
 from oauth2client.service_account import ServiceAccountCredentials
 from telegram import (
@@ -27,6 +28,13 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 reply_keyboard = ReplyKeyboardMarkup(
     keyboard=[["/btc", "/csv"], ["/update", "/gptnews"], ["/history", "/help"]],
     resize_keyboard=True,
@@ -119,7 +127,7 @@ def generate_history_plot():
     try:
         rows = get_all_rows()  # קריאה מהגיליון
     except Exception as e:
-        print(f"Error fetching data from Google Sheets: {e}")
+        logger.error(f"Error fetching data from Google Sheets: {e}")
         return
     for row in rows:
         dates.append(row["Date"])
@@ -314,21 +322,21 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ----------- reminder -----------
 async def push_reminder(chat_id):
     try:
-        print("🟢 [push_reminder] Started")
+        logger.info("🟢 [push_reminder] Started")
         await bot.send_message(chat_id=chat_id, text="🕘 Reminder:\nDon’t forget to update today’s Bitcoin data using /update → GPT → /csv")
-        print("✅ [push_reminder] Sent")
+        logger.info("✅ [push_reminder] Sent")
     except Exception as e:
-        print(f"❌ [push_reminder] ERROR: {e}")
+        logger.error(f"❌ [push_reminder] ERROR: {e}")
 
 # ----------- Push News -----------
 async def push_news(chat_id):
     try:
-        print("🟢 [push_news] Started")
+        logger.info("🟢 [push_news] Started")
         price = get_btc_price()
         await bot.send_message(chat_id=chat_id, text=f"🤑 Current BTC Value: {price}")
-        print("✅ [push_news] Sent")
+        logger.info("✅ [push_news] Sent")
     except Exception as e:
-        print(f"❌ [push_news] ERROR: {e}")
+        logger.error(f"❌ [push_news] ERROR: {e}")
     
 # ----------- scheduler -----------
 def scheduler_thread():
@@ -337,22 +345,22 @@ def scheduler_thread():
         asyncio.set_event_loop(loop)
 
         def send_news():
-            print("📤 Sending scheduled BTC update")
+            logger.info("📤 Sending scheduled BTC update")
             loop.call_soon_threadsafe(asyncio.create_task, push_news(CHAT_ID))
 
         def send_reminder():
-            print("🔔 Sending daily reminder")
+            logger.info("🔔 Sending daily reminder")
             loop.call_soon_threadsafe(asyncio.create_task, push_reminder(CHAT_ID))
 
         schedule.every(1).minutes.do(send_news)
         schedule.every(1).day.at("10:00").do(send_reminder)
-
-        print("📅 Scheduler started: reminder at 10:00, news every 2h")
+        
+        logger.info("📅 Scheduler started: reminder at 10:00, news every 2h")
         while True:
             schedule.run_pending()
             time.sleep(1)
     except Exception as e:
-        print(f"❌ Scheduler thread crashed: {e}")
+        logger.error(f"❌ Scheduler thread crashed: {e}")
 
         
 # ----------- help -----------
@@ -376,7 +384,7 @@ async def handle_help_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 def start_bot_listener():
     try:
         now = datetime.now().strftime("%d/%m/%Y %H:%M")
-        print(f"{now}: 🟢 Starting Telegram bot listener...")
+        logger.info(f"{now}: 🟢 Starting Telegram bot listener...")
         app = ApplicationBuilder().token(TOKEN).build()
         app.add_handler(CommandHandler("start", handle_start))
         app.add_handler(CommandHandler("btc", handle_btc_command))
@@ -384,14 +392,14 @@ def start_bot_listener():
         app.add_handler(CommandHandler("help", handle_help_command))
         app.add_handler(CommandHandler("history", handle_history))
         app.add_handler(csv_conv_handler)
-        print(f"{now}: 📡 Bot is listening...")
+        logger.info(f"{now}: 📡 Bot is listening...")
         app.run_polling()
     except Exception as e:
-        print(f"❌ Bot failed to start: {e}")
+        logger.error(f"❌ Bot failed to start: {e}")
 # ----------------------------------------------------------------------------------------  
 
 if __name__ == "__main__":
     now = datetime.now().strftime("%d/%m/%Y %H:%M")
-    print(f"{now}: Main On")
+    logger.info(f"{now}: Main On")
     threading.Thread(target=scheduler_thread, daemon=True).start()
     start_bot_listener()
