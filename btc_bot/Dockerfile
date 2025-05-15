@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     cron \
+    procps \       # <-- this adds 'ps', 'top', etc.
     && pip install --no-cache-dir -r requirements.txt \
     && chmod +x /run.sh \
     && apt-get clean \
@@ -22,3 +23,5 @@ RUN apt-get update && apt-get install -y \
     
 RUN chmod +x /run.sh
 CMD [ "/run.sh" ]
+
+
