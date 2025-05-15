@@ -374,19 +374,24 @@ async def handle_help_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     
 # ----------------------------------------------------------------------------------------  
 def start_bot_listener():
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", handle_start))
-    app.add_handler(CommandHandler("btc", handle_btc_command))
-    app.add_handler(CommandHandler("update", handle_update_prompt))
-    app.add_handler(CommandHandler("help", handle_help_command))
-    app.add_handler(CommandHandler("history", handle_history))
-    app.add_handler(csv_conv_handler)
-    now = datetime.now().strftime("%d/%m/%Y %H:%M")
-    print(f"{now}: 📡 Bot is listening...")
-    app.run_polling()
+    try:
+        now = datetime.now().strftime("%d/%m/%Y %H:%M")
+        print(f"{now}: 🟢 Starting Telegram bot listener...")
+        app = ApplicationBuilder().token(TOKEN).build()
+        app.add_handler(CommandHandler("start", handle_start))
+        app.add_handler(CommandHandler("btc", handle_btc_command))
+        app.add_handler(CommandHandler("update", handle_update_prompt))
+        app.add_handler(CommandHandler("help", handle_help_command))
+        app.add_handler(CommandHandler("history", handle_history))
+        app.add_handler(csv_conv_handler)
+        print(f"{now}: 📡 Bot is listening...")
+        app.run_polling()
+    except Exception as e:
+        print(f"❌ Bot failed to start: {e}")
 # ----------------------------------------------------------------------------------------  
 
 if __name__ == "__main__":
+    now = datetime.now().strftime("%d/%m/%Y %H:%M")
     print(f"{now}: Main On")
     threading.Thread(target=scheduler_thread, daemon=True).start()
     start_bot_listener()
