@@ -1,14 +1,17 @@
 import asyncio
 import requests
 import csv
+import sys
 import os
 import json
 import re
 import gspread
 import matplotlib.pyplot as plt
 from datetime import datetime
+import schedule
+import time
+import threading
 from oauth2client.service_account import ServiceAccountCredentials
-
 from telegram import Bot, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
@@ -230,15 +233,6 @@ async def handle_update_prompt(update: Update, context: ContextTypes.DEFAULT_TYP
         reply_markup=keyboard
     )
 
-# ----------- gptnews -----------
-async def handle_gptnews(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    prompt = "אשמח שתיתן לי כמה כותרות עדכניות בנוגע לחדשות ביטקוין ותחזית לשער הביטקוין לשבוע הקרוב."
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔗 פתח את ChatGPT", url="https://chat.openai.com/")]
-    ])
-    message = f"{prompt}"
-    await update.message.reply_text(message, parse_mode='Markdown', reply_markup=keyboard)
-
 # ----------- csv -----------
 async def start_csv(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("📝 Please paste the GPT output in the expected format (category scores + score_weighted):")
@@ -312,20 +306,34 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 # ----------- reminder -----------
-async def send_daily_reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🕘 Reminder:\nDon’t forget to update today’s Bitcoin data using /update → GPT → /csv")
 async def push_reminder(chat_id):
     await bot.send_message(chat_id=chat_id, text="🕘 Reminder:\nDon’t forget to update today’s Bitcoin data using /update → GPT → /csv")
 
 # ----------- Push News -----------
-async def handle_news_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    price = get_btc_price()
-    await update.message.reply_text(f"🤑 Current BTC Value: {price}")
-
 async def push_news(chat_id):
     price = get_btc_price()
     await bot.send_message(chat_id=chat_id, text=f"🤑 Current BTC Value: {price}")
-
+    
+# ----------- scheduler -----------
+def scheduler_thread():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    def send_news():
+        print("📤 Sending scheduled BTC update")
+        loop.call_soon_threadsafe(asyncio.create_task, push_news(CHAT_ID))
+    def send_reminder():
+        print("🔔 Sending daily reminder")
+        loop.call_soon_threadsafe(asyncio.create_task, push_reminder(CHAT_ID))
+    # 🕘 Daily reminder at 10:00
+    schedule.every().day.at("10:00").do(send_reminder)
+    # 🔁 Push news every 2 hours
+    schedule.every(2).hours.do(send_news)
+    # (Optional: add log line)
+    print("📅 Scheduler started: reminder at 10:00, news every 2h")
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+        
 # ----------- help -----------
 async def handle_help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = (
@@ -348,25 +356,14 @@ def start_bot_listener():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", handle_start))
     app.add_handler(CommandHandler("btc", handle_btc_command))
-    app.add_handler(CommandHandler("gptnews", handle_gptnews))
     app.add_handler(CommandHandler("update", handle_update_prompt))
-    app.add_handler(csv_conv_handler)
     app.add_handler(CommandHandler("help", handle_help_command))
     app.add_handler(CommandHandler("history", handle_history))
-    app.add_handler(CommandHandler("daily", send_daily_reminder))
-    app.add_handler(CommandHandler("news", handle_news_command))
+    app.add_handler(csv_conv_handler)
     print("📡 Bot is listening...")
     app.run_polling()
 # ----------------------------------------------------------------------------------------  
 
 if __name__ == "__main__":
-    import sys
-    import asyncio
-    if len(sys.argv) > 1 and sys.argv[1] == "listen":
-        start_bot_listener()
-    elif len(sys.argv) > 1 and sys.argv[1] == "remind":
-        asyncio.run(push_reminder(CHAT_ID))
-    elif len(sys.argv) > 1 and sys.argv[1] == "push":
-        asyncio.run(push_news(CHAT_ID))
-    else:
-        asyncio.run(send_update_to(CHAT_ID))
+    threading.Thread(target=scheduler_thread, daemon=True).start()
+    start_bot_listener()
