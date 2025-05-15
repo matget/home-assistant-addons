@@ -1,1 +1,1 @@
-* * * * * python3 /app/run.py push >> /tmp/cron.log 2>&1
+* * * * * /push.sh >> /tmp/cron.log 2>&1
