@@ -313,32 +313,47 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ----------- reminder -----------
 async def push_reminder(chat_id):
-    await bot.send_message(chat_id=chat_id, text="🕘 Reminder:\nDon’t forget to update today’s Bitcoin data using /update → GPT → /csv")
+    try:
+        print("🟢 [push_reminder] Started")
+        await bot.send_message(chat_id=chat_id, text="🕘 Reminder:\nDon’t forget to update today’s Bitcoin data using /update → GPT → /csv")
+        print("✅ [push_reminder] Sent")
+    except Exception as e:
+        print(f"❌ [push_reminder] ERROR: {e}")
 
 # ----------- Push News -----------
 async def push_news(chat_id):
-    price = get_btc_price()
-    await bot.send_message(chat_id=chat_id, text=f"🤑 Current BTC Value: {price}")
+    try:
+        print("🟢 [push_news] Started")
+        price = get_btc_price()
+        await bot.send_message(chat_id=chat_id, text=f"🤑 Current BTC Value: {price}")
+        print("✅ [push_news] Sent")
+    except Exception as e:
+        print(f"❌ [push_news] ERROR: {e}")
     
 # ----------- scheduler -----------
 def scheduler_thread():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    def send_news():
-        print("📤 Sending scheduled BTC update")
-        loop.call_soon_threadsafe(asyncio.create_task, push_news(CHAT_ID))
-    def send_reminder():
-        print("🔔 Sending daily reminder")
-        loop.call_soon_threadsafe(asyncio.create_task, push_reminder(CHAT_ID))
-    # 🕘 Daily reminder at 10:00
-    schedule.every().day.at("10:00").do(send_reminder)
-    # 🔁 Push news every 2 hours
-    schedule.every(5).minutes.do(send_news)
-    # (Optional: add log line)
-    print("📅 Scheduler started: reminder at 10:00, news every 2h")
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        def send_news():
+            print("📤 Sending scheduled BTC update")
+            loop.call_soon_threadsafe(asyncio.create_task, push_news(CHAT_ID))
+
+        def send_reminder():
+            print("🔔 Sending daily reminder")
+            loop.call_soon_threadsafe(asyncio.create_task, push_reminder(CHAT_ID))
+
+        schedule.every(1).minutes.do(send_news)
+        schedule.every(1).day.at("10:00").do(send_reminder)
+
+        print("📅 Scheduler started: reminder at 10:00, news every 2h")
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+    except Exception as e:
+        print(f"❌ Scheduler thread crashed: {e}")
+
         
 # ----------- help -----------
 async def handle_help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -366,7 +381,8 @@ def start_bot_listener():
     app.add_handler(CommandHandler("help", handle_help_command))
     app.add_handler(CommandHandler("history", handle_history))
     app.add_handler(csv_conv_handler)
-    print("📡 Bot is listening...")
+    now = datetime.now().strftime("%d/%m/%Y %H:%M")
+    print(f"{now}: 📡 Bot is listening...")
     app.run_polling()
 # ----------------------------------------------------------------------------------------  
 
