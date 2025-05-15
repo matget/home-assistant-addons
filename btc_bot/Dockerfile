@@ -6,18 +6,13 @@ WORKDIR /app
 COPY run.py .
 COPY run.sh /
 COPY requirements.txt .
-COPY daily.cron /
-COPY push.sh /
 
-RUN chmod +x /push.sh
 # Install system packages and Python dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     libfreetype6-dev \
     libpng-dev \
     libjpeg-dev \
-    cron \
-    procps && \
     pip install --no-cache-dir -r requirements.txt && \
     chmod +x /run.sh && \
     apt-get clean && \
