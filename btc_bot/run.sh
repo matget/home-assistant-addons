@@ -5,6 +5,9 @@ echo "🔧 Starting Bitcoin Bot add-on..."
 cp /daily.cron /etc/cron.d/bitcoin_cron
 chmod 0644 /etc/cron.d/bitcoin_cron
 
+# Make sure push.sh is executable
+chmod +x /push.sh
+
 # Start cron daemon
 cron
 sleep 1
