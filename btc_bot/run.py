@@ -387,5 +387,6 @@ def start_bot_listener():
 # ----------------------------------------------------------------------------------------  
 
 if __name__ == "__main__":
+    print(f"{now}: Main On")
     threading.Thread(target=scheduler_thread, daemon=True).start()
     start_bot_listener()
