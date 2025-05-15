@@ -4,7 +4,6 @@ echo "🔧 Starting Bitcoin Bot add-on..."
 # Set up cron job
 cp /daily.cron /etc/cron.d/bitcoin_cron
 chmod 0644 /etc/cron.d/bitcoin_cron
-crontab /etc/cron.d/bitcoin_cron
 
 # Start cron daemon
 cron
