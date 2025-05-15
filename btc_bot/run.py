@@ -320,11 +320,11 @@ async def push_reminder(chat_id):
 # ----------- Push News -----------
 async def handle_news_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     price = get_btc_price()
-    await update.message.reply_text(f"💲 Current BTC Value: {price}")
+    await update.message.reply_text(f"🤑 Current BTC Value: {price}")
 
 async def push_news(chat_id):
     price = get_btc_price()
-    await bot.send_message(chat_id=chat_id, text=f"💲 Current BTC Value: {price}")
+    await bot.send_message(chat_id=chat_id, text=f"🤑 Current BTC Value: {price}")
 
 # ----------- help -----------
 async def handle_help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
