@@ -12,8 +12,8 @@ echo "🕒 Cron processes running:"
 ps aux | grep [c]ron
 
 # Optional: tail the cron log for debug
-touch /tmp/cron_test.log
-tail -f /tmp/cron_test.log &
+touch /tmp/cron.log
+tail -f /tmp/cron.log &
 
 # Start your bot
 echo "📦 Running bot listener..."
